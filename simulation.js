@@ -507,7 +507,7 @@ attractorSelect.addEventListener("change", (event) => {
     if (selectedAttractor == "Lorenz") {
         DT = 0.005;
     } else if (selectedAttractor == "Thomas") {
-        DT = 0.1;
+        DT = 0.07;
     } else if (selectedAttractor == "Langford") {
         DT = 0.004;
     }
