@@ -214,7 +214,6 @@ const NUM_POINTS_DEFAULT = 64 * 8000; // Default number of points
 let NUM_POINTS = NUM_POINTS_DEFAULT;
 const WORKGROUP_SIZE = 64;
 const UPDATE_INTERVAL = 16; // Time in milliseconds between updates
-let SCALER = 40.0;
 let DT = 0.005; // Time step for the simulation
 
 const canvas = document.querySelector("canvas");
@@ -291,7 +290,7 @@ let cellShaderModule = device.createShaderModule({
         @vertex
         fn vertexMain(vert: Vertex) -> VSOutput {
             var vsOut: VSOutput;
-            vsOut.position = vec4f(vert.position.x / ${SCALER}, vert.position.y / ${SCALER}, 1.0, 1.0);
+            vsOut.position = vec4f(vert.position.x / 40.0, vert.position.y / 40.0, 1.0, 1.0);
             return vsOut;
         }
 
@@ -393,6 +392,32 @@ function createSimulationShader(attractorType) {
                 output[i * 3 + 2] = pos.z + dz;
             }
         `;
+    } else if (attractorType === "Langford") {
+        shaderCode = `
+            @group(0) @binding(0) var<storage> input: array<f32>;
+            @group(0) @binding(1) var<storage, read_write> output: array<f32>;
+            const dt = ${DT};
+            const a = 0.95;
+            const b = 0.7;
+            const c = 0.6;
+            const d = 3.5; 
+            const e = 0.25; 
+            const f = 0.1;
+
+            @compute
+            @workgroup_size(${WORKGROUP_SIZE})
+            fn computeMain(@builtin(global_invocation_id) id: vec3u) {
+                let i = id.x;
+                let pos = vec3f(input[i * 3], input[i * 3 + 1], input[i * 3 + 2]);
+                let dx = ((pos.z - b) * pos.x - (d * pos.y)) * dt;
+                let dy = (d * pos.x + (pos.z - b) * pos.y) * dt;
+                let dz = (c + (a * pos.z) - (pow(pos.z, 3) / 3) - (pow(pos.x, 2) + pow(pos.y, 2)) * (1 + e * pos.z) + (f * pos.z * pow(pos.x, 3))) * dt;
+
+                output[i * 3] = pos.x + dx;
+                output[i * 3 + 1] = pos.y + dy;
+                output[i * 3 + 2] = pos.z + dz;
+            }
+        `;
     }
     return device.createShaderModule({
         label: "Simulation Shader",
@@ -446,6 +471,28 @@ function createVertexShader(attractorType) {
                 return vec4f(0.9, 0.9, 0.9, 1.0);
             }
         `;
+    } else if (attractorType === "Langford") {
+        shaderCode = `
+            struct Vertex {
+                @location(0) position: vec3f,
+            };
+
+            struct VSOutput {
+                @builtin(position) position: vec4f,
+            };
+
+            @vertex
+            fn vertexMain(vert: Vertex) -> VSOutput {
+                var vsOut: VSOutput;
+                vsOut.position = vec4f(vert.position.x / 2.0, vert.position.y / 2.0, 1.0, 1.0);
+                return vsOut;
+            }
+
+            @fragment
+            fn fragmentMain(vsOut: VSOutput) -> @location(0) vec4f {
+                return vec4f(0.9, 0.9, 0.9, 1.0);
+            }
+        `;
     }
     return device.createShaderModule({
         label: "Cell Shader Module",
@@ -459,11 +506,10 @@ attractorSelect.addEventListener("change", (event) => {
     const selectedAttractor = event.target.value;
     if (selectedAttractor == "Lorenz") {
         DT = 0.005;
-        SCALER = 40.0;
     } else if (selectedAttractor == "Thomas") {
         DT = 0.1;
-        SCALER = 1.0;
-        console.log(SCALER);
+    } else if (selectedAttractor == "Langford") {
+        DT = 0.004;
     }
     simulationShaderModule = createSimulationShader(selectedAttractor);
     cellShaderModule = createVertexShader(selectedAttractor);
