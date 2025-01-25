@@ -210,7 +210,7 @@
 // // Run the update loop
 // setInterval(updateGrid, UPDATE_INTERVAL);
 
-const NUM_POINTS_DEFAULT = 64 * 8000; // Default number of points
+const NUM_POINTS_DEFAULT = 64 * 40000; // Default number of points
 let NUM_POINTS = NUM_POINTS_DEFAULT;
 const WORKGROUP_SIZE = 64;
 const UPDATE_INTERVAL = 16; // Time in milliseconds between updates
@@ -219,6 +219,11 @@ let DT = 0.005; // Time step for the simulation
 const canvas = document.querySelector("canvas");
 canvas.width = Math.min(window.innerWidth, window.innerHeight) * 0.8;
 canvas.height = Math.min(window.innerWidth, window.innerHeight) * 0.8;
+
+const numPointsText  = document.getElementById("num_points");
+numPointsText.textContent  = `${NUM_POINTS.toLocaleString(
+    undefined, 
+    { minimumFractionDigits: 0 })}`
 
 if (!navigator.gpu) {
     throw new Error("WebGPU not supported on this browser.");
@@ -546,7 +551,10 @@ attractorSelect.addEventListener("change", (event) => {
 // Handle slider change for number of points
 const slider = document.getElementById("myRange");
 slider.addEventListener("input", (event) => {
-    NUM_POINTS = event.target.value * 64 * 80;
+    NUM_POINTS = event.target.value * 64 * 400;
+    numPointsText.textContent  = `${NUM_POINTS.toLocaleString(
+        undefined, 
+        { minimumFractionDigits: 0 })}`
     // Reallocate buffers with new number of points
     initialState = new Float32Array(NUM_POINTS * 3);
     for (let i = 0; i < NUM_POINTS; i++) {

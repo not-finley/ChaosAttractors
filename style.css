@@ -101,6 +101,23 @@ button:hover {
   background: #45a049;
 }
 
+
+.info {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  display: flex;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 10px;
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.numPointsText {
+  padding-left: 10px;
+}
+
 /* Resizing Canvas */
 @media (max-width: 768px) {
   canvas {
